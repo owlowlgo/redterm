@@ -9,7 +9,7 @@ def main():
     # TODO Need to figure out how to encapsulate b
     with terminal_io.terminal.cbreak(), terminal_io.terminal.hidden_cursor():
         subreddit_title = 'newsokur'
-        submissions = reddit_io.get_submissions(subreddit_title, 100)
+        submissions = reddit_io.get_submissions(subreddit_title, 5)
         terminal_io.set_submissions(submissions)
 
         while True:
