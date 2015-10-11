@@ -35,3 +35,10 @@ class IO:
             comment_depth.append(comment_indentation_depth)
         return comment_depth
 
+if __name__ == '__main__':
+    reddit_io = IO()
+
+    subreddit_title = 'newsokur'
+    submissions = reddit_io.get_submissions(subreddit_title, 100)
+    for submission in submissions:
+        print(dir(submission))
