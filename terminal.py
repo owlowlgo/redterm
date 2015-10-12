@@ -36,11 +36,19 @@ class IO:
 
     def on_resize(self, *args):
         """Re-perform wrapping of text to accommodate new terminal size."""
-        self.render_buffer = self.pages[-1].item_displays_wrapped
+
+        self.render_buffer = self.pages[-1].item_displays_wrapped  # Perform wrapping
+        self.render(self.pages[-1])                                # Re-render buffer
+
+    def reset(self):
+        """Empty render buffer and repopulate it with current page."""
+
+        self.render_buffer = []
         self.render(self.pages[-1])
 
     def render(self, page):
         """Render subreddit while maintaining key press updates and resizing."""
+
         # Remember terminal size
         terminal_width = terminal.width
         terminal_height = terminal.height - 1
@@ -67,30 +75,40 @@ class IO:
                 print(terminal.move(buffer_line_no, 0) + ' ' * terminal_width)
 
         # Render cursor.
-        string = ''
+        cursor = '>'
         try:
-            string = '-' * (page.item_indentations[page.item_selected] * 4)
+            cursor += '-' * (page.item_indentations[page.item_selected] * 4)
         except IndexError:
-            string = ''
+            pass
 
-        print(terminal.move(page.item_displays_wrapped_locs[page.item_selected] - self.render_offset, 0) + '>' + string)
+        print(terminal.move(page.item_displays_wrapped_locs[page.item_selected] - self.render_offset, 0) + cursor)
 
-    @staticmethod
-    def get_out_of_screen_item_loc_next(page):
+    def get_out_of_screen_item_loc_next(self, page):
+        """Returns closest item index on next page."""
+
         new_loc = page.item_displays_wrapped_locs[page.item_selected] + terminal.height
-        closest_item_loc = min(range(len(page.item_displays_wrapped_locs)), key=lambda i: abs(page.item_displays_wrapped_locs[i]-new_loc))
+        closest_item_index = self._get_index_closest_val(page.item_displays_wrapped_locs, new_loc)
 
-        return closest_item_loc
+        return closest_item_index
+
+    def get_out_of_screen_item_loc_prev(self, page):
+        """Returns closest item index on previous page."""
+
+        new_loc = page.item_displays_wrapped_locs[page.item_selected] - terminal.height
+        closest_item_index = self._get_index_closest_val(page.item_displays_wrapped_locs, new_loc)
+
+        return closest_item_index
 
     @staticmethod
-    def get_out_of_screen_item_loc_prev(page):
-        new_loc = page.item_displays_wrapped_locs[page.item_selected] - terminal.height
-        closest_item_loc = min(range(len(page.item_displays_wrapped_locs)), key=lambda i: abs(page.item_displays_wrapped_locs[i]-new_loc))
+    def _get_index_closest_val(list, val):
+        """Return index of closest value within list."""
 
-        return closest_item_loc
+        return min(range(len(list)), key=lambda i: abs(list[i]-val))
 
     @contextlib.contextmanager
     def setup(self):
+        """Set up required terminal modes."""
+
         try:
             with terminal.cbreak(), terminal.hidden_cursor():
                 yield
@@ -100,42 +118,50 @@ class IO:
 
     @staticmethod
     def get_key(timeout=0):
+        """Returns input object."""
+
         return terminal.inkey(timeout=timeout)
 
 
 class Page:
     """Base class for how items are to be displayed and selected."""
-    def __init__(self, items, tab=2):
-        self.items = items
-        self.item_displays = []
-        self._item_displays_wrapped = []
-        self.item_displays_wrapped_locs = []
-        self._item_selected = 0
-        self.item_indentations = []
 
-        self.tab = tab
+    def __init__(self, items, indent=2):
+        self.items = items                    # Items to be displayed on page, such as Submission and Comment objects
+        self.item_displays = []               # Actual text to be displayed
+        self._item_displays_wrapped = []      # Wrapped version of above
+        self.item_displays_wrapped_locs = []  # Index of locations of items in the buffer
+        self._item_selected = 0               # Currently selected item
+        self.item_indentations = []           # Index of indentation level of items
+
+        self.indent = indent  # Indent page by this value
 
     @property
     def item_displays_wrapped(self):
-        """pass."""
+        """Process items to display to be wrapped according to current terminal size."""
+
+        # Reset current wrapped item info
         self._item_displays_wrapped = []
         self.item_displays_wrapped_locs = []
 
+        # Remember terminal width
         terminal_width = terminal.width
 
+        # Take each item to display by line, and break it into multiple lines based of current terminal width
         line_no = 0
         for item_no, item_display in enumerate(self.item_displays):
-
+            # Confirm indentation level for each item
             try:
                 item_indentation = self.item_indentations[item_no] * 4
             except IndexError:
                 item_indentation = 0
             finally:
-                indentation = self.tab + item_indentation
+                indentation = self.indent + item_indentation
 
+            # Save location of each new broken down line
             self.item_displays_wrapped_locs.append(line_no)
             for line in tt_wrap(item_display, terminal_width - indentation):
-                line = ' ' * indentation + line.rstrip('\n') + ' ' * (terminal_width - self.get_screen_length(line) - indentation)
+                line = ' ' * indentation + line.rstrip('\n') + ' ' * (terminal_width - self._get_onscreen_length(line) - indentation)
                 self._item_displays_wrapped.append(line)
                 line_no += 1
 
@@ -143,21 +169,27 @@ class Page:
 
     @property
     def item_selected(self):
+        """Return currently selected item index."""
+
         return self._item_selected
 
     @item_selected.setter
     def item_selected(self, potential_item_selected):
+        """Safely update selected item index."""
+
         if 0 <= potential_item_selected < len(self.items):
             self._item_selected = potential_item_selected
 
     @staticmethod
-    def get_screen_length(string):
+    def _get_onscreen_length(string):
         """Returns on-screen length of given string"""
+
         return len(string) + sum(unicodedata.east_asian_width(char) in {'W', 'F', 'A'} for char in string)
 
 
 class PageSubreddit(Page):
     """Holds information on how to display subreddit."""
+
     def __init__(self, items):
         Page.__init__(self, items)
 
@@ -207,5 +239,3 @@ class PageSubmission(Page):
                 comment_indentation_depth_ids.append(comment.parent_id[3:])
             comment_depth.append(comment_indentation_depth)
         return comment_depth
-
-
