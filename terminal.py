@@ -49,11 +49,15 @@ class IO:
     def render(self, page):
         """Render subreddit while maintaining key press updates and resizing."""
 
-        # Remember terminal size
+        # Remember terminal size.
         terminal_width = terminal.width
         terminal_height = terminal.height - 1
 
-        # Fill buffer with content if empty
+        # Do not render if no items exist in page yet.
+        if not page.items:
+            return
+
+        # Fill buffer with content if empty.
         if not self.render_buffer:
             self.render_buffer = page.item_displays_wrapped
 
@@ -204,19 +208,21 @@ class PageSubreddit(Page):
 
 class PageSubmission(Page):
     """Holds information on how to display a submission along with comments."""
-    def __init__(self, items):
+    def __init__(self, submission, items):
         Page.__init__(self, items)
 
-        self.item_displays.append(str(items[0].title) + '\n' +
-                                  str(items[0].score) + 'pts ' +
-                                  str(items[0].num_comments) + ' comments by (' +
-                                  str(items[0].author) + '\n\n' +
-                                  str(re.sub('\n\s*\n', '\n\n', items[0].selftext)) + '\n' +
+        self.submission = submission
+
+        self.item_displays.append(str(self.submission.title) + '\n' +
+                                  str(self.submission.score) + 'pts ' +
+                                  str(self.submission.num_comments) + ' comments by (' +
+                                  str(self.submission.author) + '\n\n' +
+                                  str(re.sub('\n\s*\n', '\n\n', self.submission.selftext)) + '\n' +
                                   '=' * terminal.width)
 
-        self.item_indentations = self._get_comment_depth(items[0], items[1:])
+        self.item_indentations = self._get_comment_depth(self.submission, items)
 
-        for item_no, item in enumerate(self.items[1:], start=1):
+        for item_no, item in enumerate(self.items):
             try:
                 self.item_displays.append(str(item.author) + ' - ' +
                                           str(item.score) + 'pts \n' +

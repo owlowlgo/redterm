@@ -35,7 +35,7 @@ def main():
 
             elif key_pressed.code == terminal.KEY_ENTER:
                 submission_selected = page_current.items[page_current.item_selected]
-                new_page = terminal.PageSubmission([submission_selected] + reddit_io.get_comments(submission_selected))
+                new_page = terminal.PageSubmission(submission_selected, reddit_io.get_comments(submission_selected))
 
                 terminal_io.pages.append(new_page)
                 terminal_io.reset()
