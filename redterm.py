@@ -1,3 +1,4 @@
+import argparse
 import logging
 
 import reddit
@@ -5,13 +6,21 @@ import terminal
 
 logging.basicConfig(filename="redterm.debug.log", level=logging.DEBUG, filemode="w")
 
+argument_parser = argparse.ArgumentParser()
+argument_parser.add_argument('-s', '--subreddit', nargs=1, help='Got to specified subreddit')
+arguments = argument_parser.parse_args()
+
 
 def main():
     terminal_io = terminal.IO()
     reddit_io = reddit.IO()
 
+    if arguments.subreddit:
+        subreddit_title = arguments.subreddit[0]
+    else:
+        subreddit_title = 'frontpage'
+
     with terminal_io.setup():
-        subreddit_title = 'newsokur'
         page = terminal.PageSubreddit(reddit_io.get_submissions(subreddit_title, 100))
         terminal_io.pages.append(page)
 
