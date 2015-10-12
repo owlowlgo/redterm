@@ -11,7 +11,7 @@ def main():
     reddit_io = reddit.IO()
 
     with terminal_io.setup():
-        subreddit_title = 'frontpage'
+        subreddit_title = 'newsokur'
         page = terminal.PageSubreddit(reddit_io.get_submissions(subreddit_title, 100))
         terminal_io.pages.append(page)
 
@@ -38,11 +38,11 @@ def main():
                 new_page = terminal.PageSubmission([submission_selected] + reddit_io.get_comments(submission_selected))
 
                 terminal_io.pages.append(new_page)
-                terminal_io.render_buffer = []
+                terminal_io.reset()
 
             elif key_pressed.code == terminal.KEY_BACKSPACE:
                 del terminal_io.pages[-1]
-                terminal_io.render_buffer = []
+                terminal_io.reset()
 
             elif key_pressed.code == terminal.KEY_ESCAPE:
                 break
