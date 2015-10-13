@@ -1,7 +1,8 @@
 import argparse
 import logging
+import sys
 
-import reddit
+import pages
 import terminal
 
 logging.basicConfig(filename="redterm.debug.log", level=logging.DEBUG, filemode="w")
@@ -13,7 +14,6 @@ arguments = argument_parser.parse_args()
 
 def main():
     terminal_io = terminal.IO()
-    reddit_io = reddit.IO()
 
     if arguments.subreddit:
         subreddit_title = arguments.subreddit[0]
@@ -21,7 +21,7 @@ def main():
         subreddit_title = 'frontpage'
 
     with terminal_io.setup():
-        page = terminal.PageSubreddit(reddit_io.get_submissions(subreddit_title, 100))
+        page = pages.PageSubreddit(subreddit_title, terminal.terminal.width)
         terminal_io.pages.append(page)
 
         while True:
@@ -44,13 +44,14 @@ def main():
 
             elif key_pressed.code == terminal.KEY_ENTER:
                 submission_selected = page_current.items[page_current.item_selected]
-                new_page = terminal.PageSubmission(submission_selected, reddit_io.get_comments(submission_selected))
+                new_page = pages.PageSubmission(submission_selected, terminal.terminal.width)
 
                 terminal_io.pages.append(new_page)
                 terminal_io.reset()
 
             elif key_pressed.code == terminal.KEY_BACKSPACE:
-                del terminal_io.pages[-1]
+                if len(terminal_io.pages) > 1:
+                    del terminal_io.pages[-1]
                 terminal_io.reset()
 
             elif key_pressed.code == terminal.KEY_ESCAPE:
