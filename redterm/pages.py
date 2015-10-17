@@ -25,7 +25,7 @@ class PageBase:
     @property
     def item_displays_wrapped(self):
         """Process items to display to be wrapped according to current terminal size."""
-
+        logging.debug('width: ' + str(self.width))
         # Reset current wrapped item info
         self._item_displays_wrapped = []
         self.item_displays_wrapped_locs = []
@@ -100,7 +100,7 @@ class PageSubmission(PageBase):
                                   str(self.submission.num_comments) + ' comments by (' +
                                   str(self.submission.author) + '\n\n' +
                                   str(re.sub('\n\s*\n', '\n\n', self.submission.selftext)) + '\n' +
-                                  '=' * self.width)
+                                  '=')
 
         for comment in praw.helpers.flatten_tree(submission.comments):
             self.items.append(comment)
