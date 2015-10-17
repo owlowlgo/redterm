@@ -4,7 +4,7 @@ import logging
 import pages
 import terminal
 
-logging.basicConfig(filename="redterm.debug.log", level=logging.DEBUG, filemode="w")
+logging.basicConfig(filename="/tmp/redterm.debug.log", level=logging.DEBUG, filemode="w")
 
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument('-s', '--subreddit', nargs=1, help='Got to specified subreddit')
@@ -24,26 +24,27 @@ def main():
         terminal_io.pages.append(page)
 
         while True:
-            page_current = terminal_io.pages[-1]
+            terminal_io.render()
 
-            terminal_io.render(page_current)
-
+            # Controls
             key_pressed = terminal_io.get_key(1)
+
             if key_pressed.code == terminal.KEY_UP:
-                page_current.item_selected -= 1
+                terminal_io.select_item_prev()
 
             elif key_pressed.code == terminal.KEY_DOWN:
-                page_current.item_selected += 1
+                terminal_io.select_item_next()
 
             elif key_pressed.code == terminal.KEY_PGUP:
-                page_current.item_selected = terminal_io.get_out_of_screen_item_loc_prev(page_current)
+                terminal_io.select_item_prevscreen()
 
             elif key_pressed.code == terminal.KEY_PGDN:
-                page_current.item_selected = terminal_io.get_out_of_screen_item_loc_next(page_current)
+                terminal_io.select_item_nextscreen()
 
             elif key_pressed.code == terminal.KEY_ENTER:
+                page_current = terminal_io.pages[-1]
                 submission_selected = page_current.items[page_current.item_selected]
-                new_page = pages.PageSubmission(submission_selected, terminal.terminal.width)
+                new_page = pages.PageSubmission(submission_selected, terminal_io.terminal_width)
 
                 terminal_io.pages.append(new_page)
                 terminal_io.reset()
