@@ -58,7 +58,7 @@ class IO:
             sys.stdout.write("\x1b]2;{0}\x07".format(self.page_current.name))
 
             for line in self.page_current.item_strings_formatted:
-                line += ' ' * (self.terminal_width - terminal.length(line))
+                line += terminal.on_black(' ' * (self.terminal_width - terminal.length(line)))
                 self.render_buffer.append(line)
 
         # Adjust the rendering offset if selected menu item is out of bounds of current terminal.
@@ -76,12 +76,12 @@ class IO:
                 print(terminal.move(buffer_line_no, 0) + buffer_line, end='')
             except IndexError:
                 # Print blank line in case buffer is empty
-                print(terminal.move(buffer_line_no, 0) + (' ' * self.terminal_width), end='')
+                print(terminal.move(buffer_line_no, 0) + (terminal.on_black(' ' * self.terminal_width)), end='')
 
         # Render cursor.
-        cursor = '>'
+        cursor = terminal.white_on_black('>')
         try:
-            cursor += '-' * (self.page_current.item_indentations[self.page_current.item_selected] * 4)
+            cursor += terminal.white_on_black('-' * (self.page_current.item_indentations[self.page_current.item_selected] * 4))
         except IndexError:
             pass
 

@@ -9,7 +9,7 @@ logging.basicConfig(filename="/tmp/redterm.info.log", level=logging.INFO, filemo
 
 
 argument_parser = argparse.ArgumentParser()
-argument_parser.add_argument('-s', '--subreddit', nargs=1, help='Got to specified subreddit')
+argument_parser.add_argument('-s', '--subreddit', nargs=1, help='Go to specified subreddit')
 arguments = argument_parser.parse_args()
 
 

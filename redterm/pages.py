@@ -57,7 +57,7 @@ class PageBase:
                 elif line == '[SEP2]':
                     line = tags['[SEP2]']
 
-                line = ' ' * indentation + line.rstrip('\n')
+                line = terminal.bold_white_on_black(' ' * indentation + line.rstrip('\n'))
                 self._item_strings_formatted.append(line)
                 line_no += 1
 
@@ -87,13 +87,13 @@ class PageSubreddit(PageBase):
             self.items.append(submission)
 
         for item_no, item in enumerate(self.items, 1):
-            self.item_strings.append(terminal.bold(str(item_no) + '. ') +
-                                     terminal.bold(str(item.title)) + ' (' +
-                                     terminal.underline_blue('{uri.netloc}'.format(uri=urlparse(item.url))) + ')\n' +
-                                     str(item.score) + 'pts ' +
-                                     str(item.num_comments) + ' comments by (' +
-                                     terminal.cyan(str(item.author)) + ') - ' +
-                                     terminal.cyan('/r/' + str(item.subreddit)) + '\n' +
+            self.item_strings.append(terminal.bold_white_on_black(str(item_no) + '. ') +
+                                     terminal.bold_white_on_black(str(item.title) + ' (') +
+                                     terminal.blue_on_black('{uri.netloc}'.format(uri=urlparse(item.url))) + terminal.bold_white_on_black(')') + '\n' +
+                                     terminal.bold_white_on_black(str(item.score) + 'pts ') +
+                                     terminal.bold_white_on_black(str(item.num_comments) + ' comments by ') +
+                                     terminal.cyan_on_black(str(item.author)) + terminal.bold_white_on_black(' - ') +
+                                     terminal.cyan_on_black('/r/' + str(item.subreddit)) + '\n' +
                                      str('\n'))
 
 
@@ -124,7 +124,7 @@ class PageSubmission(PageBase):
 
         for item_no, item in enumerate(self.items):
             try:
-                self.item_strings.append('* ' + terminal.cyan(str(item.author)) + ' - ' +
+                self.item_strings.append(terminal.white_on_black('* ') + terminal.cyan_on_black(str(item.author)) + ' - ' +
                                          str(item.score) + 'pts \n' +
                                          str(item.body) + '\n'
                                          '\n')
