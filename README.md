@@ -53,3 +53,12 @@ $ redterm -s subreddit
 
 ## License
 MIT
+
+## Thanks
+This project would not have been possible without the following projects.
+
+* Blessed
+https://github.com/jquast/blessed
+
+* PRAW
+https://github.com/praw-dev/praw
