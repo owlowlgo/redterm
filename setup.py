@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-from version import __version__ as version
+import redterm.__init__
 
 here = path.abspath(path.dirname(__file__))
 
@@ -20,7 +20,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 setup(
     name='redterm',
 
-    version=version,
+    version=redterm.__init__.__version__,
 
     description='A terminal based reddit viewer.',
     long_description=long_description,
@@ -30,6 +30,7 @@ setup(
 
     # Author details
     author='owlowlgo',
+    author_email='no@email.com',
 
     # Choose your license
     license='MIT',
@@ -46,6 +47,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary',
         'Topic :: Terminals',
         'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
@@ -61,7 +63,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'redterm=redterm.redterm:main',
+            'redterm=redterm.__main__:main',
         ],
     },
 )
