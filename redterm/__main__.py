@@ -1,10 +1,13 @@
 import argparse
 import logging
+import sys
 
+import __init__
 import pages
 import terminal
 
 logging.basicConfig(filename="/tmp/redterm.debug.log", level=logging.DEBUG, filemode="w")
+logging.basicConfig(filename="/tmp/redterm.info.log", level=logging.INFO, filemode="w")
 
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument('-s', '--subreddit', nargs=1, help='Got to specified subreddit')
@@ -12,6 +15,8 @@ arguments = argument_parser.parse_args()
 
 
 def main():
+    """First entry point."""
+
     terminal_io = terminal.IO()
 
     if arguments.subreddit:
@@ -43,8 +48,8 @@ def main():
 
             elif key_pressed.code == terminal.KEY_ENTER:
                 page_current = terminal_io.pages[-1]
-                submission_selected = page_current.items[page_current.item_selected]
-                new_page = pages.PageSubmission(submission_selected, terminal_io.terminal_width)
+                item_selected = page_current.items[page_current.item_selected]
+                new_page = pages.PageSubmission(item_selected, terminal_io.terminal_width)
 
                 terminal_io.pages.append(new_page)
                 terminal_io.reset()
@@ -52,7 +57,7 @@ def main():
             elif key_pressed.code == terminal.KEY_BACKSPACE:
                 if len(terminal_io.pages) > 1:
                     del terminal_io.pages[-1]
-                terminal_io.reset()
+                    terminal_io.reset()
 
             elif key_pressed.code == terminal.KEY_ESCAPE:
                 break

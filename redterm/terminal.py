@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import signal
+import sys
 
 import blessed
 
@@ -22,8 +23,8 @@ class IO:
     """Handles rendering of Page objects."""
 
     def __init__(self):
-        self.pages = []                        # List of all Page-related objects generated for session.
-        self.page_current = self.pages = [-1]  # Keep track of current(last) page.
+        self.pages = []              # List of all Page-related objects generated for session.
+        self.page_current = 0        # Keep track of current(last) page.
 
         self.render_buffer = []      # Render buffer. Holds entire page to display.
         self.render_offset = 0       # Offset to keep track of where in render buffer to render from.
@@ -32,13 +33,12 @@ class IO:
         self.terminal_width = 0      # Remember terminal width.
         self.terminal_height = 0     # Remember terminal height.
 
-        # TODO refactor variable names to make it obvious what holds buffer coordinates and not
-
         # Initialize terminal
         print(terminal.enter_fullscreen)
         print(terminal.clear)
 
-        signal.signal(signal.SIGWINCH, self.on_resize)  # Init signal for terminal resize event.
+        # Init signal for terminal resize event.
+        signal.signal(signal.SIGWINCH, self.on_resize)
 
     def render(self):
         """Render last page while keeping in account of key press updates and resizing."""
@@ -47,7 +47,7 @@ class IO:
 
         # Remember terminal size.
         self.terminal_width = terminal.width
-        self.terminal_height = terminal.height - 1
+        self.terminal_height = terminal.height
 
         # Do not render if no items exist in page yet.
         if not self.page_current.items:
@@ -55,12 +55,16 @@ class IO:
 
         # Fill buffer with content if empty.
         if not self.render_buffer:
-            self.render_buffer = self.page_current.item_displays_wrapped
+            sys.stdout.write("\x1b]2;{0}\x07".format(self.page_current.name))
+
+            for line in self.page_current.item_strings_formatted:
+                line += ' ' * (self.terminal_width - terminal.length(line))
+                self.render_buffer.append(line)
 
         # Adjust the rendering offset if selected menu item is out of bounds of current terminal.
-        if self.page_current.item_displays_wrapped_locs[self.page_current.item_selected] >= self.render_offset + self.terminal_height:
+        if self.page_current.item_onscreenlocs[self.page_current.item_selected] >= self.render_offset + self.terminal_height:
             self.render_offset += self.terminal_height
-        elif self.page_current.item_displays_wrapped_locs[self.page_current.item_selected] < self.render_offset:
+        elif self.page_current.item_onscreenlocs[self.page_current.item_selected] < self.render_offset:
             self.render_offset -= self.terminal_height
             if self.render_offset < 0:
                 self.render_offset = 0
@@ -69,10 +73,10 @@ class IO:
         for buffer_line_no in range(self.terminal_height):
             try:
                 buffer_line = self.render_buffer[self.render_offset + self.render_offset_item + buffer_line_no]
-                print(terminal.move(buffer_line_no, 0) + buffer_line)
+                print(terminal.move(buffer_line_no, 0) + buffer_line, end='')
             except IndexError:
                 # Print blank line in case buffer is empty
-                print(terminal.move(buffer_line_no, 0) + ' ' * self.terminal_width)
+                print(terminal.move(buffer_line_no, 0) + (' ' * self.terminal_width), end='')
 
         # Render cursor.
         cursor = '>'
@@ -82,28 +86,35 @@ class IO:
             pass
 
         if self.render_offset_item == 0:
-            print(terminal.move(self.page_current.item_displays_wrapped_locs[self.page_current.item_selected] - self.render_offset, 0) + cursor)
+            print(terminal.move(self.page_current.item_onscreenlocs[self.page_current.item_selected] - self.render_offset, 0) + cursor)
 
     def on_resize(self, *args):
         """Re-perform wrapping of text to accommodate new terminal size."""
 
-        self.page_current.width = terminal.width                      # Give page new terminal width
-        self.render_buffer = self.page_current.item_displays_wrapped  # Perform wrapping
-        self.render()                                                 # Re-render buffer
+        self.page_current.width = terminal.width                       # Give page new terminal width
+        self.render_buffer = []
+
+        self.render()                                                  # Re-render buffer
 
     def reset(self):
         """Empty render buffer and repopulate it with current page."""
 
-        self.render_buffer = []      # Empty rendering buffer to trigger re-format of page.
-        self.render()                # Re-render last page.
+        self.page_current = self.pages[-1]
+        self.page_current.width = terminal.width                       # Give page new terminal width
+
+        self.render_buffer = []
+        self.render_offset = 0
+        self.render_offset_item = 0
+
+        self.render()
 
     def _get_distance_betweenitems(self, item_no1, item_no2):
         """Determine distance between 2 items does not fit terminal height"""
 
         try:
             if item_no1 >= 0 and item_no2 >= 0:
-                loc_current = self.page_current.item_displays_wrapped_locs[item_no1]
-                loc_potential = self.page_current.item_displays_wrapped_locs[item_no2]
+                loc_current = self.page_current.item_onscreenlocs[item_no1]
+                loc_potential = self.page_current.item_onscreenlocs[item_no2]
                 distance = abs(loc_potential - loc_current)
             else:
                 distance = 0
@@ -152,16 +163,16 @@ class IO:
     def _get_out_of_screen_item_loc_next(self):
         """Returns closest item index on next page."""
 
-        new_loc = self.page_current.item_displays_wrapped_locs[self.page_current.item_selected] + terminal.height
-        closest_item_index = self._get_index_closest_val(self.page_current.item_displays_wrapped_locs, new_loc)
+        new_loc = self.page_current.item_onscreenlocs[self.page_current.item_selected] + terminal.height
+        closest_item_index = self._get_index_closest_val(self.page_current.item_onscreenlocs, new_loc)
 
         return closest_item_index
 
     def _get_out_of_screen_item_loc_prev(self):
         """Returns closest item index on previous page."""
 
-        new_loc = self.page_current.item_displays_wrapped_locs[self.page_current.item_selected] - terminal.height
-        closest_item_index = self._get_index_closest_val(self.page_current.item_displays_wrapped_locs, new_loc)
+        new_loc = self.page_current.item_onscreenlocs[self.page_current.item_selected] - terminal.height
+        closest_item_index = self._get_index_closest_val(self.page_current.item_onscreenlocs, new_loc)
 
         return closest_item_index
 
