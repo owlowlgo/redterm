@@ -7,7 +7,7 @@ import praw
 from uniseg.wrap import tt_wrap
 
 terminal = blessed.Terminal()
-reddit_api = praw.Reddit(user_agent='desktop:https://github.com/owlowlgo/redterm:' + str(__version__))
+reddit_api = praw.Reddit(user_agent='desktop:https://github.com/owlowlgo/redterm:0.0.0')  # TODO Add version
 
 
 class PageBase:

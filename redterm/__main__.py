@@ -2,7 +2,6 @@ import argparse
 import logging
 import sys
 
-import __init__
 import pages
 import terminal
 
