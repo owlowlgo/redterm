@@ -7,6 +7,7 @@ import redterm.terminal
 logging.basicConfig(filename="/tmp/redterm.debug.log", level=logging.DEBUG, filemode="w")
 logging.basicConfig(filename="/tmp/redterm.info.log", level=logging.INFO, filemode="w")
 
+
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument('-s', '--subreddit', nargs=1, help='Got to specified subreddit')
 arguments = argument_parser.parse_args()
