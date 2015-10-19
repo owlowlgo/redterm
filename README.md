@@ -47,7 +47,7 @@ $ redterm -s subreddit
 ```
 
 ## Controls
-* Up/Down: Move cursor
+* Up/Down, k/j: Move cursor
 * Enter: Choose Submission/Comment
 * Esc: Quit
 
