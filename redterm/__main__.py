@@ -33,10 +33,10 @@ def main():
             # Controls
             key_pressed = terminal_io.get_key(1)
 
-            if key_pressed.code == redterm.terminal.KEY_UP:
+            if key_pressed.code == redterm.terminal.KEY_UP or key_pressed == 'k':
                 terminal_io.select_item_prev()
 
-            elif key_pressed.code == redterm.terminal.KEY_DOWN:
+            elif key_pressed.code == redterm.terminal.KEY_DOWN or key_pressed == 'j':
                 terminal_io.select_item_next()
 
             elif key_pressed.code == redterm.terminal.KEY_PGUP:
