@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 
 import blessed
 import praw
-from uniseg.wrap import tt_wrap
 
 terminal = blessed.Terminal()
 reddit_api = praw.Reddit(user_agent='desktop:https://github.com/owlowlgo/redterm:0.0.0')  # TODO Add version
@@ -29,6 +28,9 @@ class PageBase:
     def item_strings_formatted(self):
         """Process items to display to be wrapped according to current terminal size."""
 
+        #if self._item_strings_formatted and self.width == terminal.width:
+        #    return self._item_strings_formatted
+
         # Reset current wrapped item info
         self._item_strings_formatted = []
         self.item_onscreenlocs = []
@@ -50,8 +52,7 @@ class PageBase:
 
             # Save location of each new broken down line
             self.item_onscreenlocs.append(line_no)
-            for line in tt_wrap(item_display, self.width - indentation):
-
+            for line in terminal.wrap(item_display, self.width - indentation):
                 if line == '[SEP1]':
                     line = tags['[SEP1]']
                 elif line == '[SEP2]':

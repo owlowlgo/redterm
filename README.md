@@ -47,8 +47,9 @@ $ redterm -s subreddit
 ```
 
 ## Controls
-* Up/Down: Move cursor
+* Up(j)/Down(k): Move cursor
 * Enter: Choose Submission/Comment
+* o: Open url in browser specified in config file(~/.redterm/config.yaml)
 * Esc: Quit
 
 ## License

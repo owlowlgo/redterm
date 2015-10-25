@@ -99,6 +99,8 @@ class IO:
     def reset(self):
         """Empty render buffer and repopulate it with current page."""
 
+        # TODO Need to redo this so that it doesn't scrap cached page data each time this is run.
+
         self.page_current = self.pages[-1]
         self.page_current.width = terminal.width                       # Give page new terminal width
 
