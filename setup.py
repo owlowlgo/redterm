@@ -56,7 +56,7 @@ setup(
 
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
 
-    install_requires=['blessed>=1.12.0', 'uniseg>=0.7.1', 'praw>=3.3.0', 'pyyaml>=3.11'l],
+    install_requires=['blessed>=1.12.0', 'uniseg>=0.7.1', 'praw>=3.3.0', 'pyyaml>=3.11'],
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow
