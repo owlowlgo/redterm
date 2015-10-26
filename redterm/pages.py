@@ -52,15 +52,16 @@ class PageBase:
 
             # Save location of each new broken down line
             self.item_onscreenlocs.append(line_no)
-            for line in terminal.wrap(item_display, self.width - indentation):
-                if line == '[SEP1]':
-                    line = tags['[SEP1]']
-                elif line == '[SEP2]':
-                    line = tags['[SEP2]']
+            for item_display_line in item_display.splitlines():
+                for line in terminal.wrap(item_display_line, self.width - indentation):
+                    if line == '[SEP1]':
+                        line = tags['[SEP1]']
+                    elif line == '[SEP2]':
+                        line = tags['[SEP2]']
 
-                line = terminal.bold_white_on_black(' ' * indentation + line.rstrip('\n'))
-                self._item_strings_formatted.append(line)
-                line_no += 1
+                    line = terminal.bold_white_on_black(' ' * indentation + line)
+                    self._item_strings_formatted.append(line)
+                    line_no += 1
 
         return self._item_strings_formatted
 
@@ -94,8 +95,7 @@ class PageSubreddit(PageBase):
                                      terminal.bold_white_on_black(str(item.score) + 'pts ') +
                                      terminal.bold_white_on_black(str(item.num_comments) + ' comments by ') +
                                      terminal.cyan_on_black(str(item.author)) + terminal.bold_white_on_black(' - ') +
-                                     terminal.cyan_on_black('/r/' + str(item.subreddit)) + '\n' +
-                                     str('\n'))
+                                     terminal.cyan_on_black('/r/' + str(item.subreddit)) + '\n')
 
 
 
@@ -127,8 +127,7 @@ class PageSubmission(PageBase):
             try:
                 self.item_strings.append(terminal.white_on_black('* ') + terminal.cyan_on_black(str(item.author)) + ' - ' +
                                          str(item.score) + 'pts \n' +
-                                         str(item.body) + '\n'
-                                         '\n')
+                                         str(item.body) + '\n')
 
             except AttributeError:
                 self.item_strings.append(terminal.underline_blue('More comments...') + '\n'

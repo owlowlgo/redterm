@@ -47,7 +47,7 @@ class IO:
 
         # Remember terminal size.
         self.terminal_width = terminal.width
-        self.terminal_height = terminal.height
+        self.terminal_height = terminal.height - 1
 
         # Do not render if no items exist in page yet.
         if not self.page_current.items:
@@ -77,6 +77,9 @@ class IO:
             except IndexError:
                 # Print blank line in case buffer is empty
                 print(terminal.move(buffer_line_no, 0) + (terminal.on_black(' ' * self.terminal_width)), end='')
+
+        s = 'Status info to come here'
+        print(terminal.move(self.terminal_height, 0) + (terminal.black_on_cyan(s + ' ' * (self.terminal_width - len(s)))), end='')
 
         # Render cursor.
         cursor = terminal.white_on_black('>')
