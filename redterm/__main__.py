@@ -9,8 +9,6 @@ import redterm.pages
 import redterm.terminal
 
 logging.basicConfig(filename="./redterm.debug.log", level=logging.DEBUG, filemode="w")
-logging.basicConfig(filename="./redterm.info.log", level=logging.INFO, filemode="w")
-
 
 argument_parser = argparse.ArgumentParser()
 argument_parser.add_argument('-s', '--subreddit', nargs=1, help='Go to specified subreddit')
@@ -51,6 +49,7 @@ def main():
         while True:
             page_current = terminal_io.pages[-1]
             item_selected = page_current.items[page_current.item_selected]
+            terminal_io.status_text = 'Viewing.'
 
             terminal_io.render()
 
@@ -61,6 +60,18 @@ def main():
                 terminal_io.select_item_prev()
 
             elif key_pressed.code == redterm.terminal.KEY_DOWN or key_pressed == 'j':
+
+                # If in subreddit mode, download remaining items if at last item
+                if type(page_current) is redterm.pages.PageSubreddit:
+                    if page_current.item_selected == len(page_current.items) - 1:
+                        terminal_io.status_text = 'Loading...'
+                        terminal_io.render()
+
+                        terminal_io.pages[-1].update()
+
+                        terminal_io.reset()
+                        terminal_io.status_text = 'Viewing.'
+
                 terminal_io.select_item_next()
 
             elif key_pressed.code == redterm.terminal.KEY_PGUP:
@@ -70,11 +81,21 @@ def main():
                 terminal_io.select_item_nextscreen()
 
             elif key_pressed.code == redterm.terminal.KEY_ENTER:
+                terminal_io.status_text = 'Loading...'
+                terminal_io.render()
 
-                new_page = redterm.pages.PageSubmission(item_selected, terminal_io.terminal_width)
+                try:
+                    new_page = redterm.pages.PageSubmission(item_selected, terminal_io.terminal_width)
 
-                terminal_io.pages.append(new_page)
-                terminal_io.reset()
+                    terminal_io.pages.append(new_page)
+                    terminal_io.status_text = 'Viewing.'
+                    terminal_io.reset()
+
+                except AttributeError:
+                    pass
+
+                finally:
+                    terminal_io.status_text = 'Viewing.'
 
             elif key_pressed == 'o':
                 try:
@@ -85,9 +106,14 @@ def main():
                     pass
 
             elif key_pressed.code == redterm.terminal.KEY_BACKSPACE:
+                terminal_io.status_text = 'Loading...'
+                terminal_io.render()
+
                 if len(terminal_io.pages) > 1:
                     del terminal_io.pages[-1]
                     terminal_io.reset()
+
+                terminal_io.status_text = 'Viewing.'
 
             elif key_pressed.code == redterm.terminal.KEY_ESCAPE:
                 break

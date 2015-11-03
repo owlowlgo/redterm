@@ -1,5 +1,5 @@
 __title__ = 'redterm'
-__version__ = '0.2.2'
+__version__ = '0.2.4'
 __author__ = 'owlowlgo'
 __license__ = 'The MIT License (MIT)'
 __copyright__ = '(c) 2015 ' + __author__

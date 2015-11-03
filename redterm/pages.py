@@ -5,8 +5,13 @@ from urllib.parse import urlparse
 import blessed
 import praw
 
+import redterm.__init__
+
+
 terminal = blessed.Terminal()
-reddit_api = praw.Reddit(user_agent='desktop:https://github.com/owlowlgo/redterm:0.0.0')  # TODO Add version
+reddit_api = praw.Reddit(user_agent='desktop:https://github.com/owlowlgo/redterm:' + redterm.__init__.__version__)  # TODO Add version
+
+LIMIT = 25  # TODO put this in config file
 
 
 class PageBase:
@@ -21,7 +26,7 @@ class PageBase:
         self._item_selected = 0            # Currently selected item
         self.item_indentations = []        # Index of indentation level of items
 
-        self.width = width                 # Indent page by this value
+        self.width = width                 # Width of page
         self.indent = indent               # Indent page by this value
 
     @property
@@ -35,16 +40,12 @@ class PageBase:
         self._item_strings_formatted = []
         self.item_onscreenlocs = []
 
-        # Prepare tags
-        tags = {'[SEP1]': '-' * (self.width - 5),
-                '[SEP2]': '=' * (self.width - 5)}
-
         # Take each item to display by line, and break it into multiple lines based of current terminal width
         line_no = 0
         for item_no, item_display in enumerate(self.item_strings):
             # Confirm indentation level for each item
             try:
-                item_indentation = self.item_indentations[item_no] * 4
+                item_indentation = self.item_indentations[item_no] * 2
             except IndexError:
                 item_indentation = 0
             finally:
@@ -53,15 +54,20 @@ class PageBase:
             # Save location of each new broken down line
             self.item_onscreenlocs.append(line_no)
             for item_display_line in item_display.splitlines():
-                for line in terminal.wrap(item_display_line, self.width - indentation):
-                    if line == '[SEP1]':
-                        line = tags['[SEP1]']
-                    elif line == '[SEP2]':
-                        line = tags['[SEP2]']
+                item_width = self.width - indentation - 1 # Width of item is width of page, minus item indentation, and minus an extra character for the trailing '│' symbol
+                for line in terminal.wrap(item_display_line, item_width):
+                    if indentation > 1:
+                        line = terminal.bold_white_on_black(' ' * indentation + '│' + line)
+                    else:
+                        line = terminal.bold_white_on_black(' ' * indentation + line)
 
-                    line = terminal.bold_white_on_black(' ' * indentation + line)
                     self._item_strings_formatted.append(line)
                     line_no += 1
+
+            # Add extra blank line under item
+            line = terminal.bold_white_on_black(' ' * self.width)
+            self._item_strings_formatted.append(line)
+            line_no += 1
 
         return self._item_strings_formatted
 
@@ -83,20 +89,40 @@ class PageSubreddit(PageBase):
     """Holds information on how to display subreddit."""
 
     def __init__(self, subreddit_title, width, indent=2):
-        PageBase.__init__(self, '/r/' + subreddit_title, width, indent=2)
+        self.subreddit_title = subreddit_title
 
-        for submission in reddit_api.get_subreddit(subreddit_title).get_hot(limit=100):
-            self.items.append(submission)
+        PageBase.__init__(self, '/r/' + self.subreddit_title, width, indent=2)
 
+        self.submissions = reddit_api.get_subreddit(self.subreddit_title).get_hot(limit=1000)
+
+        for i in range(LIMIT):
+            self.items.append(next(self.submissions))
+
+        self.prepare_text()
+
+    def prepare_text(self):
+        """pass"""
+
+        self.item_strings = []
         for item_no, item in enumerate(self.items, 1):
             self.item_strings.append(terminal.bold_white_on_black(str(item_no) + '. ') +
                                      terminal.bold_white_on_black(str(item.title) + ' (') +
                                      terminal.blue_on_black('{uri.netloc}'.format(uri=urlparse(item.url))) + terminal.bold_white_on_black(')') + '\n' +
                                      terminal.bold_white_on_black(str(item.score) + 'pts ') +
                                      terminal.bold_white_on_black(str(item.num_comments) + ' comments by ') +
-                                     terminal.cyan_on_black(str(item.author)) + terminal.bold_white_on_black(' - ') +
+                                     terminal.cyan_on_black(str(item.author)) + terminal.bold_white_on_black(' ') +
                                      terminal.cyan_on_black('/r/' + str(item.subreddit)) + '\n')
 
+    def update(self):
+        """pass"""
+
+        for i in range(LIMIT):
+            try:
+                self.items.append(next(self.submissions))
+            except StopIteration:
+                pass
+
+        self.prepare_text()
 
 
     #derivatives = ('on', 'bright', 'on_bright',)
@@ -115,8 +141,7 @@ class PageSubmission(PageBase):
                                  str(self.submission.score) + 'pts ' +
                                  str(self.submission.num_comments) + ' comments by (' +
                                  terminal.underline_cyan(str(self.submission.author)) + ')' +
-                                 str(re.sub('\n\s*\n', '\n\n', self.submission.selftext)) + '\n' +
-                                 '[SEP1]')
+                                 str(re.sub('\n\s*\n', '\n\n', self.submission.selftext)) + '\n')
 
         for comment in praw.helpers.flatten_tree(submission.comments):
             self.items.append(comment)
@@ -125,15 +150,18 @@ class PageSubmission(PageBase):
 
         for item_no, item in enumerate(self.items):
             try:
-                self.item_strings.append(terminal.white_on_black('* ') + terminal.cyan_on_black(str(item.author)) + ' - ' +
+                self.item_strings.append(terminal.white_on_black('* ') + terminal.cyan_on_black(str(item.author)) + ' ' +
                                          str(item.score) + 'pts \n' +
                                          str(item.body) + '\n')
 
             except AttributeError:
-                self.item_strings.append(terminal.underline_blue('More comments...') + '\n'
-                                         '\n')
+                self.item_strings.append('* ' + terminal.underline_blue('More comments...'))
 
         self.items = [self.submission] + self.items  # TODO This is ugly. Need refactor.
+
+    def update(self):
+        """pass"""
+        pass
 
     @staticmethod
     def _get_comment_depth(submission, comments):

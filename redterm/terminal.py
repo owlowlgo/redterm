@@ -33,6 +33,8 @@ class IO:
         self.terminal_width = 0      # Remember terminal width.
         self.terminal_height = 0     # Remember terminal height.
 
+        self.status_text = ''
+
         # Initialize terminal
         print(terminal.enter_fullscreen)
         print(terminal.clear)
@@ -55,11 +57,10 @@ class IO:
 
         # Fill buffer with content if empty.
         if not self.render_buffer:
-            sys.stdout.write("\x1b]2;{0}\x07".format(self.page_current.name))
-
             for line in self.page_current.item_strings_formatted:
                 line += terminal.on_black(' ' * (self.terminal_width - terminal.length(line)))
                 self.render_buffer.append(line)
+            self.render_offset = self.page_current.item_onscreenlocs[self.page_current.item_selected]
 
         # Adjust the rendering offset if selected menu item is out of bounds of current terminal.
         if self.page_current.item_onscreenlocs[self.page_current.item_selected] >= self.render_offset + self.terminal_height:
@@ -78,17 +79,17 @@ class IO:
                 # Print blank line in case buffer is empty
                 print(terminal.move(buffer_line_no, 0) + (terminal.on_black(' ' * self.terminal_width)), end='')
 
-        s = 'Status info to come here'
-        print(terminal.move(self.terminal_height, 0) + (terminal.black_on_cyan(s + ' ' * (self.terminal_width - len(s)))), end='')
+        # Render status
+        print(terminal.move(self.terminal_height, 0) + (terminal.black_on_cyan(self.status_text + ' ' * (self.terminal_width - terminal.length(self.status_text)))), end='')
 
         # Render cursor.
-        cursor = terminal.white_on_black('>')
-        try:
-            cursor += terminal.white_on_black('-' * (self.page_current.item_indentations[self.page_current.item_selected] * 4))
-        except IndexError:
-            pass
-
+        # TODO Need to fix bug where the cursor occasionally gets drawn outside the screen and disrupting the rendering process
         if self.render_offset_item == 0:
+            cursor = terminal.white_on_black('>')
+            try:
+                cursor += terminal.white_on_black('-' * (self.page_current.item_indentations[self.page_current.item_selected] * 2))
+            except IndexError:
+                pass
             print(terminal.move(self.page_current.item_onscreenlocs[self.page_current.item_selected] - self.render_offset, 0) + cursor)
 
     def on_resize(self, *args):
@@ -108,8 +109,8 @@ class IO:
         self.page_current.width = terminal.width                       # Give page new terminal width
 
         self.render_buffer = []
-        self.render_offset = 0
-        self.render_offset_item = 0
+        #self.render_offset = 0
+        #self.render_offset_item = 0
 
         self.render()
 
@@ -168,7 +169,7 @@ class IO:
     def _get_out_of_screen_item_loc_next(self):
         """Returns closest item index on next page."""
 
-        new_loc = self.page_current.item_onscreenlocs[self.page_current.item_selected] + terminal.height
+        new_loc = self.page_current.item_onscreenlocs[self.page_current.item_selected] + self.terminal_height + 1
         closest_item_index = self._get_index_closest_val(self.page_current.item_onscreenlocs, new_loc)
 
         return closest_item_index
@@ -176,7 +177,7 @@ class IO:
     def _get_out_of_screen_item_loc_prev(self):
         """Returns closest item index on previous page."""
 
-        new_loc = self.page_current.item_onscreenlocs[self.page_current.item_selected] - terminal.height
+        new_loc = self.page_current.item_onscreenlocs[self.page_current.item_selected] - self.terminal_height
         closest_item_index = self._get_index_closest_val(self.page_current.item_onscreenlocs, new_loc)
 
         return closest_item_index
