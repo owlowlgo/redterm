@@ -58,7 +58,7 @@ MIT
 ## Thanks
 This project would not have been possible without the following projects.
 
-* Blessed
+* blessed
 https://github.com/jquast/blessed
 
 * PRAW
